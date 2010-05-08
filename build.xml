@@ -1,0 +1,40 @@
+<?xml version="1.0" ?>
+<project name="Physics-game" default="build">
+	<import file="build-template.xml"/>
+	<property name="jarfile" value="physgame.jar"/>
+	<property name="main" value="Test"/>
+	<property name="dir.lib" value="lib"/>
+	<property name="dir.lib.native" value="lib/native"/>
+	<property name="mainscript" value="scripts/test.js"/>
+
+	<path id="jar.runtimepath">
+		<pathelement location="${jarfile}"/>
+		<fileset dir="${dir.lib}">
+			<include name="*.jar"/>
+		</fileset>
+	</path>
+
+	<target name="run" depends="build, dist" description="Run project">
+		<java classname="${main}">
+			<classpath refid="compile.classpath" />
+			<classpath refid="jar.runtimepath" />
+		</java>
+	</target>
+
+	<target name="js" depends="mvn-init" description="Run javascript interpreter on a file">
+		<java classname="org.mozilla.javascript.tools.shell.Main" fork="true">
+			<arg value="${mainscript}" />
+			<sysproperty key="java.library.path" value="${dir.lib.native}" />
+			<classpath refid="compile.classpath" />
+			<classpath refid="jar.runtimepath" />
+		</java>
+	</target>
+
+	<target name="js-console" depends="mvn-init" description="Run javascript console">
+		<java classname="org.mozilla.javascript.tools.shell.Main" fork="true">
+			<sysproperty key="java.library.path" value="${dir.lib.native}" />
+			<classpath refid="compile.classpath" />
+			<classpath refid="jar.runtimepath" />
+		</java>
+	</target>
+</project>

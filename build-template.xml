@@ -1,0 +1,184 @@
+<?xml version="1.0" ?>
+<!--
+HOW TO USE:
+Within your build.xml, include this line
+	<import file="build-template.xml"/>
+
+To use the "dist" packaging target for building jars, make sure the "jarfile" property is set
+	<property name="jarfile" value="project.jar"/>
+
+Explanation of targets:
+	build
+		automatically builds all source files in "src" directory to "bin/main"
+	test
+		automatically builds all source files in "test" directory to "bin/test", and
+		runs any class with the "Test" suffix
+	test_report
+		same as test, but generates an xml report file in the root folder
+	test_one
+		test a particular class by setting the property "test.target"
+	javadoc
+		generates a javadoc api in "docs/api" from your "src" directory
+	dist
+		packages the contents of "bin/main" into a jar defined by ${jarfile}
+		using manifest from src/META-INF/MANIFEST.MF, which can be 
+		as simple as "Manifest-Version: 1.0"
+
+-->
+<project name="build-template">
+	<!-- Directories -->
+	<property name="dir.build" value="bin"/>
+	<property name="dir.src" value="src"/>
+	<property name="dir.src.build" value="${dir.build}/main"/>
+	<property name="dir.test" value="test"/>
+	<property name="dir.test.build" value="${dir.build}/test"/>
+	<property name="dir.test.report" value="${dir.build}/report"/>
+	<property name="dir.apidocs" value="docs/api"/>
+	<property name="dir.native" value="${dir.src.build}"/>
+	<property environment="env"/>  
+
+	<path id="main.runtimepath">
+		<pathelement location="${dir.src.build}"/>
+	</path>
+
+	<path id="test.runtimepath">
+		<path refid="main.runtimepath"/>
+		<pathelement location="${dir.test.build}"/>
+	</path>
+
+	<!-- Targets -->
+	<target name="init">
+		<mkdir dir="${dir.build}"/>
+		<mkdir dir="${dir.src.build}"/>
+		<mkdir dir="${dir.test.build}"/>
+		<mkdir dir="${dir.test.report}"/>
+	</target>
+
+	<target name="mvn-init" unless="compile.classpath" xmlns:artifact="urn:maven-artifact-ant" description="initialize maven and install dependencies">
+		<typedef resource="org/apache/maven/artifact/ant/antlib.xml" uri="urn:maven-artifact-ant"
+			classpath="lib/maven-ant-tasks.jar"/>
+		<condition property="maven.repo.local" value="${maven.repo.local}" else="${user.home}/.m2/repository">
+			<isset property="maven.repo.local"/>
+		</condition>
+		<echo>maven.repo.local=${maven.repo.local}</echo>
+		<artifact:localRepository id="local.repository" path="${maven.repo.local}"/>
+		<artifact:pom file="pom.xml" id="maven.project"/>
+		<artifact:dependencies pathId="compile.classpath" filesetId="compile.fileset" useScope="compile">
+			<pom refid="maven.project"/>
+			<localRepository refid="local.repository"/>
+		</artifact:dependencies>
+		<artifact:dependencies pathId="test.classpath" filesetId="test.fileset" useScope="test">
+			<pom refid="maven.project"/>
+			<localRepository refid="local.repository"/>
+		</artifact:dependencies>
+		<artifact:dependencies pathId="runtime.classpath" filesetId="runtime.fileset" useScope="runtime">
+			<pom refid="maven.project"/>
+			<localRepository refid="local.repository"/>
+		</artifact:dependencies>
+	</target>
+
+	<target name="mvn-install" depends="mvn-init, dist" xmlns:artifact="urn:maven-artifact-ant" description="installs the project distributable into a local repository">
+		<artifact:pom file="pom.xml" id="maven.project"/>
+		<artifact:install file="${jarfile}">
+			<pom refid="maven.project"/>
+		</artifact:install>
+	</target>
+
+	<target name="mvn-deploy" depends="mvn-init, dist" xmlns:artifact="urn:maven-artifact-ant" description="deploys the project distributable into a remote repository">
+		<artifact:pom file="pom.xml" id="maven.project"/>
+		<artifact:install-provider artifactId="wagon-http" version="1.0-beta-2"/>
+		<artifact:remoteRepository id="nexus" url="http://localhost:8081/nexus/content/repositories/releases"/>
+		<artifact:deploy file="${jarfile}">
+			<remoteRepository refId="nexus"/>
+			<pom refid="maven.project"/>
+		</artifact:deploy>
+	</target>
+
+	<target name="clean" description="Removes generated directories and test reports">
+		<delete dir="${dir.build}"/>
+		<delete dir="${dir.apidocs}" />
+	</target>
+
+	<target name="build" depends="init, mvn-init" description="Builds the project">
+		<javac srcdir="${dir.src}" destdir="${dir.src.build}" includeantruntime="false">
+			<classpath refid="compile.classpath" />
+		</javac>
+	</target>
+	
+	<target name="build_test" depends="build">
+		<javac srcdir="${dir.test}" destdir="${dir.test.build}" includeantruntime="false">
+			<classpath refid="test.classpath" />
+			<classpath refid="test.runtimepath" />
+		</javac>
+	</target>
+
+	<target name="test_one" depends="build_test">
+		<junit fork="yes" printsummary="yes">
+			<formatter type="plain" usefile="false" />
+			<classpath refid="test.classpath" />
+			<classpath refid="test.runtimepath" />
+			<test name="${test.target}" />
+		</junit>
+	</target>
+
+	<target name="test" depends="build_test" description="Run the unit test cases">
+		<junit fork="yes" printsummary="yes" haltonfailure="true">
+			<sysproperty key="java.library.path" value="${dir.native}" />
+			<formatter type="plain" usefile="false" />
+			<classpath refid="test.classpath" />
+			<classpath refid="test.runtimepath" />
+			<batchtest>
+				<fileset dir="${dir.test.build}">
+					<include name="**/*UnitTest.class"/>
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+
+	<target name="test_all" depends="build_test" description="Run all test cases">
+		<junit fork="yes" printsummary="yes" haltonfailure="true">
+			<sysproperty key="java.library.path" value="${dir.native}" />
+			<formatter type="plain" usefile="false" />
+			<classpath refid="test.classpath" />
+			<classpath refid="test.runtimepath" />
+			<batchtest>
+				<fileset dir="${dir.test.build}">
+					<include name="**/*Test.class"/>
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+
+	<target name="test_report" depends="build_test" description="Run all test cases and generate a report">
+		<junit fork="yes" printsummary="yes">
+			<sysproperty key="java.library.path" value="${dir.native}" />
+			<formatter type="xml" usefile="true" />
+			<classpath refid="test.classpath" />
+			<classpath refid="test.runtimepath" />
+			<batchtest todir="${dir.test.report}">
+				<fileset dir="${dir.test.build}">
+					<include name="**/*Test.class"/>
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+
+	<target name="findbugs" depends="build" description="Run findbugs">
+		<taskdef name="findbugs" classname="edu.umd.cs.findbugs.anttask.FindBugsTask"/>
+		<findbugs home="${env.FINDBUGS_HOME}" output="xml" outputFile="${dir.test.report}/findbugs.xml">
+			<auxClasspath refid="test.classpath" />
+			<sourcePath path="${dir.src}" />
+			<class location="${dir.src.build}" />
+		</findbugs>
+	</target>
+
+	<target name="javadoc" depends="mvn-init" description="Generate javadoc files">
+		<javadoc sourcepath="${dir.src}" destdir="${dir.apidocs}" classpathref="compile.classpath" failonerror="yes" />
+	</target>
+
+	<target name="dist" description="Packages the project into a jar">
+		<jar destfile="${jarfile}" manifest="src/META-INF/MANIFEST.MF">
+			<fileset dir="${dir.src.build}"/>
+		</jar>
+	</target>
+</project>
