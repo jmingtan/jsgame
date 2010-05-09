@@ -20,7 +20,7 @@ function createWorld() {
     world = World(worldAABB, gravity, false);
 
     var groundBd = BodyDef();
-    groundBd.position.set(WIDTH / 2, HEIGHT);
+    groundBd.position.set(WIDTH / 2, HEIGHT - 100);
     var ground = world.createBody(groundBd);
     var groundSd = PolygonDef();
     groundSd.setAsBox(WIDTH / 2, 5);
@@ -65,12 +65,9 @@ var simpleGame = {
 
 	render:
 	function (gc, g) {
-		//land.draw(0, 0);
+        land.draw(0, 0);
         var pos = body.getPosition();
-        var aabb = AABB();
-        body.getNext().computeAABB(aabb, body.getXForm());
-        g.drawRect(pos.x, pos.y, aabb);
-		//plane.draw(pos.x, pos.y, scale);
+        plane.draw(pos.x, pos.y, scale);
 	},
 
 	closeRequested:
