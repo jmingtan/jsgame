@@ -1,9 +1,11 @@
 <project name="Physgame" default="run" basedir="..">
     <property name="build" value="bin"/>
     <property name="lib" value="lib"/>
+    <property name="media" value="data"/>
 
     <path id="base.class.path">
         <pathelement path="${build}"/>
+        <pathelement path="${media}"/>
         <fileset dir="${lib}" includes="*.jar"/>
     </path>
 

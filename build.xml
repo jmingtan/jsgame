@@ -3,12 +3,14 @@
 	<import file="build-template.xml"/>
 	<property name="jarfile" value="physgame.jar"/>
 	<property name="main" value="Test"/>
+	<property name="dir.media" value="data"/>
 	<property name="dir.lib" value="lib"/>
 	<property name="dir.lib.native" value="lib/native"/>
 	<property name="mainscript" value="scripts/test.js"/>
 
 	<path id="jar.runtimepath">
 		<pathelement location="${jarfile}"/>
+		<pathelement location="${dir.media}"/>
 		<fileset dir="${dir.lib}">
 			<include name="*.jar"/>
 		</fileset>
