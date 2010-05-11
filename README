@@ -1,0 +1,9 @@
+Javascript games written with Rhino
+
+To run without JDK:
+1. Edit commons-launcher/launcher.xml to run the script file you want
+2. Double click on run.bat or execute run.sh
+
+If using JDK and Ant:
+1. "ant js" to run the script file defined in build.xml
+2. "ant js-console" to get a javascript console with all libraries in lib/ folder added to classpath
