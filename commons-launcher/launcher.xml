@@ -13,7 +13,7 @@
         <launch classname="org.mozilla.javascript.tools.shell.Main">
             <classpath refid="base.class.path"/>
             <jvmarg value="-Djava.library.path=lib/native" />
-			<arg value="scripts/test.js"/>
+			<arg value="scripts/pong.js"/>
         </launch>
     </target>
 </project>

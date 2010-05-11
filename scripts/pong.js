@@ -120,6 +120,12 @@ var pong = function () {
             score = 0;
         }
 
+        function reset(width, height) {
+            ballBody.setPosition(width / 2, height / 2);
+            ballBody.setForce(0, 0);
+            score = 0;
+        }
+
         game.init = function (gc) {
             var width = gc.getWidth();          // width of game world
             var height = gc.getHeight();        // height of game world
@@ -166,6 +172,10 @@ var pong = function () {
             }
             if (false == b.isWithinBounds(gc.getWidth(), gc.getHeight())) {
                 b.setPosition(b.getPosition().getX(), positionB);
+            }
+
+            if (input.isKeyPressed(pack.Input.KEY_SPACE)) {
+                reset(gc.getWidth(), gc.getHeight());
             }
 
             world.step(delta);
