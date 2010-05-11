@@ -1,6 +1,6 @@
-var pong = {};
+load("scripts/jsgame.js");
 
-pong.game = function () {
+var pong = function () {
     var pub = {};
 
     const WIDTH = 800;          // window width
@@ -16,34 +16,9 @@ pong.game = function () {
         net.phys2d.math
     );
 
-    // construct a minimal game implementation
-    function makeGame(title) {
-        var game = {
-            init: function (gc) {},
-
-            update: function (gc, delta) {},
-
-            render: function (gc, g) {},
-
-            closeRequested: function () {
-                return true;
-            },
-
-            getTitle: function () {
-                return title;
-            }
-        };
-        return game;
-    }
-
-    // build a Slick-based wrapper around a game implementation
-    function makeSlickApplication(game) {
-        return new pack.AppGameContainer(new pack.Game(game));
-    }
-
     // implementation of Pong
     function makePongGame() {
-        var game = makeGame("Pong");
+        var game = jsgame.makeGame("Pong");
 
         var aX, aY, bX, bY;     // Player locations
         var paddleWidth;        // Paddle width
@@ -56,6 +31,9 @@ pong.game = function () {
         var b;                  // B's body wrapper
         var ballBody;           // Ball body
         var ballMass;           // Ball mass
+        var walls;              // Wall body wrapper array
+        var score;              // Current score
+        var streak;             // Highest streak
 
         function setupGameObjects(width, height) {
             paddleSpeed = 1;
@@ -71,38 +49,7 @@ pong.game = function () {
             ballY = height / 2;
         }
 
-        function makeBodyWrapper(body, shape) {
-            var obj = {
-                body: body,
-
-                shape: shape,
-
-                getPosition: function () {
-                    return body.getPosition();
-                },
-
-                setPosition: function (x, y) {
-                    body.setPosition(x, y);
-                },
-
-                isWithinBounds: function (width, height) {
-                    var position;                       // position of body
-                    var box;                            // bounding box of body
-
-                    position = body.getPosition();
-                    box = shape.getBounds();
-                    if (position.getY() - (box.getHeight() / 2) < 0)
-                        return false;
-                    if (position.getY() + (box.getHeight() / 2) > height)
-                        return false;
-                    return true;
-                }
-            };
-            return obj;
-        }
-
         function setupGamePhysics(width, height) {
-            var walls;              // Array of walls surrounding the playing area
             var i;                  // Counter variable
             var wallWidth;          // Width of the walls
             var ballVelocityX;      // Starting x-velocity of the ball
@@ -126,7 +73,7 @@ pong.game = function () {
                 body.setPosition(x, y);
                 body.setRestitution(1);
                 world.add(body);
-                return makeBodyWrapper(body, shape);
+                return jsgame.makeBodyWrapper(body, shape);
             }
 
             a = makeStaticBoxBody("A's Body", paddleWidth, paddleHeight, aX, aY, world);
@@ -139,10 +86,38 @@ pong.game = function () {
             ballBody.setRestitution(1);
             world.add(ballBody);
 
-            makeStaticBoxBody("Top", width, wallWidth, width / 2, -(wallWidth * 2), world);
-            makeStaticBoxBody("Left", wallWidth, height, -(wallWidth * 2), height / 2, world);
-            makeStaticBoxBody("Right", wallWidth, height, width + (wallWidth / 2), height / 2, world);
-            makeStaticBoxBody("Bottom", width, wallWidth, width / 2, height, world);
+            walls = [];
+            walls[0] = makeStaticBoxBody("Top", width, wallWidth, width / 2, -(wallWidth * 2), world);
+            walls[1] = makeStaticBoxBody("Left", wallWidth, height, -(wallWidth * 2), height / 2, world);
+            walls[2] = makeStaticBoxBody("Right", wallWidth, height, width + (wallWidth / 2), height / 2, world);
+            walls[3] = makeStaticBoxBody("Bottom", width, wallWidth, width / 2, height, world);
+        }
+
+        function checkCollisions(bodies) {
+            var i;              // counter variable
+            var checkBody;
+
+            for (i=0; i<bodies.length; i++) {
+                checkBody = (bodies[i].getBodyA() === ballBody) ? bodies[i].getBodyB() : bodies[i].getBodyA();
+
+                if (walls[1].equalsId(checkBody.getID()) || walls[2].equalsId(checkBody.getID())) {
+                    endConditionReached();
+                }
+                if (walls[0].equalsId(checkBody.getID()) || walls[3].equalsId(checkBody.getID())) {
+                    scorePoint();
+                }
+            }
+        }
+
+        function scorePoint() {
+            score += 1;
+        }
+
+        function endConditionReached() {
+            if (score > streak) {
+                streak = score;
+            }
+            score = 0;
         }
 
         game.init = function (gc) {
@@ -150,12 +125,17 @@ pong.game = function () {
             var height = gc.getHeight();        // height of game world
             setupGameObjects(width, height);
             setupGamePhysics(width, height);
+            score = streak = 0;
         }
 
         game.render = function (gc, g) {
             g.drawRect(aX, aY - (paddleHeight / 2), paddleWidth, paddleHeight);
             g.drawRect(bX - (paddleWidth / 2), bY - (paddleHeight / 2), paddleWidth, paddleHeight);
             g.drawOval(ballX, ballY, ballRadius, ballRadius);
+            g.drawString("Score: " + score, 10, 10);
+            if (0 != streak) {
+                g.drawString("Greatest streak: " + streak, 10, 40);
+            }
         }
 
         game.update = function (gc, delta) {
@@ -195,6 +175,7 @@ pong.game = function () {
             bY = b.getPosition().getY();
             ballX = ballBody.getPosition().getX();
             ballY = ballBody.getPosition().getY();
+            checkCollisions(world.getContacts(ballBody));
         }
 
         return game;
@@ -202,12 +183,13 @@ pong.game = function () {
 
     // run the game
     pub.run = function () {
-        app = makeSlickApplication(makePongGame());
+        app = jsgame.makeSlickApplication(makePongGame());
         app.setDisplayMode(WIDTH, HEIGHT, FULLSCREEN);
+        app.setShowFPS(false);
         app.start();
     }
 
     return pub;
 }();
 
-pong.game.run();
+pong.run();
