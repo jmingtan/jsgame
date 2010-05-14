@@ -53,10 +53,12 @@ var jsgame = function () {
 
                 position = body.getPosition();
                 box = shape.getBounds();
-                if (position.getY() - (box.getHeight() / 2) < 0)
+                if (position.getY() - (box.getHeight() / 2) < 0) {
                     return false;
-                if (position.getY() + (box.getHeight() / 2) > height)
+                }
+                if (position.getY() + (box.getHeight() / 2) > height) {
                     return false;
+                }
                 return true;
             },
 
