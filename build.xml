@@ -7,6 +7,7 @@
 	<property name="dir.lib" value="lib"/>
 	<property name="dir.lib.native" value="lib/native"/>
 	<property name="mainscript" value="scripts/pong.js"/>
+	<property name="testscript" value="testscripts/test-jsgame.js"/>
 
 	<path id="jar.runtimepath">
 		<pathelement location="${jarfile}"/>
@@ -35,6 +36,14 @@
 	<target name="js-console" depends="mvn-init" description="Run javascript console">
 		<java classname="org.mozilla.javascript.tools.shell.Main" fork="true">
 			<sysproperty key="java.library.path" value="${dir.lib.native}" />
+			<classpath refid="compile.classpath" />
+			<classpath refid="jar.runtimepath" />
+		</java>
+	</target>
+
+	<target name="js-test" depends="mvn-init" description="Run javascript tests">
+		<java classname="org.mozilla.javascript.tools.shell.Main" fork="true">
+			<arg value="${testscript}" />
 			<classpath refid="compile.classpath" />
 			<classpath refid="jar.runtimepath" />
 		</java>
