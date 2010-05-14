@@ -7,7 +7,7 @@
 	<property name="dir.lib" value="lib"/>
 	<property name="dir.lib.native" value="lib/native"/>
 	<property name="mainscript" value="scripts/pong.js"/>
-	<property name="testscript" value="testscripts/test-jsgame.js"/>
+	<property name="testscript" value="testscripts/test-suite.js"/>
 
 	<path id="jar.runtimepath">
 		<pathelement location="${jarfile}"/>

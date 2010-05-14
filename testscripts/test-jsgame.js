@@ -2,6 +2,7 @@ load("scripts/jsgame.js");
 load("testscripts/jstest.js");
 
 function testJSGame() {
+    var suiteName = "JSGameSuite";
 
     function testMakeGame() {
         var title = "TestTitle";
@@ -55,13 +56,12 @@ function testJSGame() {
         jstest.assert("error, should be within bounds", obj.isWithinBounds(width, height));
     }
 
-    jstest.suite("JSGameSuite");
+    jstest.suite(suiteName);
     jstest.run(testMakeGame);
     jstest.run(testMakeBodyWrapper);
     jstest.run(testIsWithinBounds);
+    print("All " + jstest.testsRun + " tests passed on " + suiteName);
 }
 
 testJSGame();
-print("All tests passed!");
-print("Tests run: " + jstest.testsRun);
 
